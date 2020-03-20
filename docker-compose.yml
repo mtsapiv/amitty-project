@@ -1,0 +1,53 @@
+version: '3'
+services:
+  mysql:
+    restart: always
+    container_name: mysql
+    image: mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: ${ROOT_PASSWORD}
+      MYSQL_ROOT_HOST: '%'
+      MYSQL_PASSWORD: ${PASSWORD}
+      MYSQL_USER: ${USER}
+      MYSQL_DATABASE: amitty
+    volumes:
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    ports:
+      - "3306:3306"
+  configuration-service:
+    restart: on-failure
+    container_name: configuration-service
+    build: ./configuration-service
+    expose:
+      - "8888"
+    ports:
+      - 8888:8888
+    environment:
+      WAIT_HOSTS: mysql:3306
+    depends_on:
+      - mysql
+  user-service:
+    restart: on-failure
+    container_name: user-service
+    build: ./user-service
+    expose:
+      - "8081"
+    ports:
+      - 8081:8081
+    environment:
+      WAIT_HOSTS: mysql:3306
+    depends_on:
+      - mysql
+      - configuration-service
+#  angular-spa-ui:
+#    container_name: angular-spa-ui
+#    restart: on-failure
+#    build: ./angular-spa-ui
+#    expose:
+#      - "4200"
+#    ports:
+#      - 4200:4200
+#    environment:
+#      WAIT_HOSTS: java:8082
+#    depends_on:
+#      - java
